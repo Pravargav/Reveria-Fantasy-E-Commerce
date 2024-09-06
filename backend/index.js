@@ -1,4 +1,3 @@
-const port = 4000;
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
@@ -6,12 +5,13 @@ const multer = require("multer");
 const path = require("path");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
+require('dotenv').config();  // Add this line
 
 app.use(express.json());
 app.use(cors());
 
 // Database Connection With MongoDB
-mongoose.connect(process.env.MONGO_URI);
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true });
 
 // API Creation
 app.get("/", (req, res) => {
@@ -32,7 +32,7 @@ app.use('/images', express.static('upload/images'));
 app.post("/upload", upload.single('product'), (req, res) => {
     res.json({
         success: 1,
-        image_url: `http://localhost:${port}/images/${req.file.filename}`
+        image_url: `http://localhost:${process.env.PORT}/images/${req.file.filename}`
     });
 });
 
@@ -127,7 +127,7 @@ app.post('/signup', async (req, res) => {
 
         await user.save();
         const data = { user: { id: user.id } };
-        const token = jwt.sign(data, process.env.JWT_SECRET);
+        const token = jwt.sign(data, process.env.JWT_SECRET);  // Use environment variable
         res.json({ success: true, token });
     } catch (error) {
         res.status(500).send("Error registering user");
@@ -141,7 +141,7 @@ app.post('/login', async (req, res) => {
         const passCompare = req.body.password === user.password;
         if (passCompare) {
             const data = { user: { id: user.id } };
-            const token = jwt.sign(data, process.env.JWT_SECRET);
+            const token = jwt.sign(data, process.env.JWT_SECRET);  // Use environment variable
             res.json({ success: true, token });
         } else {
             res.json({ success: false, errors: "Wrong Password" });
@@ -174,7 +174,7 @@ const fetchUser = async (req, res, next) => {
         res.status(401).send({ errors: "Please authenticate using a valid token" });
     } else {
         try {
-            const data = jwt.verify(token, process.env.JWT_SECRET);
+            const data = jwt.verify(token, process.env.JWT_SECRET);  // Use environment variable
             req.user = data.user;
             next();
         } catch (error) {
@@ -233,9 +233,9 @@ app.post('/getcart', fetchUser, async (req, res) => {
 });
 
 // Start the server
-app.listen(port, (error) => {
+app.listen(process.env.PORT || 4000, (error) => {
     if (!error) {
-        console.log("Server Running on Port " + port);
+        console.log("Server Running on Port " + (process.env.PORT || 4000));
     } else {
         console.log("Error: " + error);
     }

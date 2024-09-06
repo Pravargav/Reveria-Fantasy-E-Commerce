@@ -11,7 +11,7 @@ app.use(express.json());
 app.use(cors());
 
 // Database Connection With MongoDB
-mongoose.connect("mongodb+srv://SambavJetty:8333964328@cluster0.jap1hzc.mongodb.net/e-commerce");
+mongoose.connect(process.env.MONGO_URI);
 
 // API Creation
 app.get("/", (req, res) => {
@@ -127,7 +127,7 @@ app.post('/signup', async (req, res) => {
 
         await user.save();
         const data = { user: { id: user.id } };
-        const token = jwt.sign(data, 'secret_ecom');
+        const token = jwt.sign(data, process.env.JWT_SECRET);
         res.json({ success: true, token });
     } catch (error) {
         res.status(500).send("Error registering user");
@@ -141,7 +141,7 @@ app.post('/login', async (req, res) => {
         const passCompare = req.body.password === user.password;
         if (passCompare) {
             const data = { user: { id: user.id } };
-            const token = jwt.sign(data, 'secret_ecom');
+            const token = jwt.sign(data, process.env.JWT_SECRET);
             res.json({ success: true, token });
         } else {
             res.json({ success: false, errors: "Wrong Password" });
@@ -174,7 +174,7 @@ const fetchUser = async (req, res, next) => {
         res.status(401).send({ errors: "Please authenticate using a valid token" });
     } else {
         try {
-            const data = jwt.verify(token, 'secret_ecom');
+            const data = jwt.verify(token, process.env.JWT_SECRET);
             req.user = data.user;
             next();
         } catch (error) {

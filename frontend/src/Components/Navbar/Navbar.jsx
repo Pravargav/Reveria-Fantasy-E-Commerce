@@ -22,7 +22,7 @@ const Navbar = () => {
       <div className="nav-login-cart">
         {localStorage.getItem('auth-token')
         ?<button onClick={()=>{localStorage.removeItem('auth-token');window.location.replace('/')}}>Logout</button>:<Link style={{textDecoration:'none', color:'black'}} to={'/login'}><button>Login</button></Link>}
-        <a href="https://tourism-website-five.vercel.app/"><button>Sell</button></a>
+        <a href="https://reveria-admin.vercel.app/"><button>Sell</button></a>
         <Link to={'/cart'}><img src={cart_icon} alt="" /></Link>
         <div className="nav-cart-count">{getTotalCartItems()}</div>
       </div>

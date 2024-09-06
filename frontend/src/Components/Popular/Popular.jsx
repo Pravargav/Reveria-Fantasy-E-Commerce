@@ -7,7 +7,7 @@ const Popular = () => {
 
 
   useEffect(()=>{
-    fetch('http://localhost:4000/popularinwomen')
+    fetch('https://reveria-backend.vercel.app/popularinwomen')
     .then((response)=>response.json())
     .then((data)=>setPopularProducts(data));
   },[])

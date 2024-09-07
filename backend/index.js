@@ -232,11 +232,4 @@ app.post('/getcart', fetchUser, async (req, res) => {
     res.json(userData.cartData);
 });
 
-// Start the server
-app.listen(process.env.PORT || 4000, (error) => {
-    if (!error) {
-        console.log("Server Running on Port " + (process.env.PORT || 4000));
-    } else {
-        console.log("Error: " + error);
-    }
-});
+

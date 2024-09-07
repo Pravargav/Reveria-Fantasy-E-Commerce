@@ -20,23 +20,28 @@ app.get("/", (req, res) => {
     res.send("Express App is Running");
 });
 
-// Image Storage Engine
-const storage = multer.diskStorage({
-    destination: './upload/images',
-    filename: (req, file, cb) => {
-        cb(null, `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`);
-    }
-});
+// Image Storage Engine - In-Memory Storage
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // Creating Upload Endpoint for images
-app.use('/images', express.static('upload/images'));
 app.post("/upload", upload.single('product'), (req, res) => {
+    if (!req.file) {
+        return res.status(400).send('No file uploaded');
+    }
+
+    // Handle file data (e.g., upload to cloud storage)
+    const fileBuffer = req.file.buffer;
+    // Here you would upload `fileBuffer` to cloud storage and get the URL
+
     res.json({
         success: 1,
-        image_url: `http://localhost:${process.env.PORT}/images/${req.file.filename}`
+        image_url: `http://localhost:${process.env.PORT}/images/${req.file.originalname}`
     });
 });
+
+// Static route for images - Consider moving this to cloud storage
+app.use('/images', express.static('upload/images'));
 
 // Database schema for creating products
 const Product = mongoose.model("Product", {
@@ -138,18 +143,22 @@ app.post('/signup', async (req, res) => {
 
 // Logging in user
 app.post('/login', async (req, res) => {
-    let user = await Users.findOne({ email: req.body.email });
-    if (user) {
-        const passCompare = req.body.password === user.password;
-        if (passCompare) {
-            const data = { user: { id: user.id } };
-            const token = jwt.sign(data, process.env.JWT_SECRET);  // Use environment variable
-            res.json({ success: true, token });
+    try {
+        let user = await Users.findOne({ email: req.body.email });
+        if (user) {
+            const passCompare = req.body.password === user.password;
+            if (passCompare) {
+                const data = { user: { id: user.id } };
+                const token = jwt.sign(data, process.env.JWT_SECRET);  // Use environment variable
+                res.json({ success: true, token });
+            } else {
+                res.json({ success: false, errors: "Wrong Password" });
+            }
         } else {
-            res.json({ success: false, errors: "Wrong Password" });
+            res.json({ success: false, errors: "Wrong Email Id" });
         }
-    } else {
-        res.json({ success: false, errors: "Wrong Email Id" });
+    } catch (error) {
+        res.status(500).send("Error logging in user");
     }
 });
 
@@ -173,7 +182,7 @@ app.get('/popularinwomen', async (req, res) => {
 const fetchUser = async (req, res, next) => {
     const token = req.header('auth-token');
     if (!token) {
-        res.status(401).send({ errors: "Please authenticate using a valid token" });
+        return res.status(401).send({ errors: "Please authenticate using a valid token" });
     } else {
         try {
             const data = jwt.verify(token, process.env.JWT_SECRET);  // Use environment variable
@@ -230,8 +239,15 @@ app.post('/removefromcart', fetchUser, async (req, res) => {
 
 // Get cart data
 app.post('/getcart', fetchUser, async (req, res) => {
-    let userData = await Users.findOne({ _id: req.user.id });
-    res.json(userData.cartData);
+    try {
+        let userData = await Users.findOne({ _id: req.user.id });
+        res.json(userData.cartData);
+    } catch (error) {
+        console.error("Error fetching cart data:", error);
+        res.status(500).send("Error fetching cart data");
+    }
 });
 
-
+// Start the server
+const PORT = process.env.PORT || 5000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

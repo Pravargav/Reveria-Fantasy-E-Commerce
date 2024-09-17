@@ -4,14 +4,16 @@ const mongoose = require("mongoose");
 const AWS = require('aws-sdk');
 const multer = require('multer');
 const multerS3 = require('multer-s3');
+const path = require("path");
 const cors = require("cors");
 const jwt = require("jsonwebtoken");
 const s3 = new AWS.S3({
     accessKeyId: process.env.AWS_ACCESS_KEY_ID,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: 'eu-north-1'
+    region: 'eu-north-1' // Example: 'us-east-1'
 });
 require('dotenv').config();
+
 
 app.use(express.json());
 app.use(cors());

@@ -12,7 +12,6 @@ const s3 = new AWS.S3({
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
     region: 'eu-north-1' // Example: 'us-east-1'
 });
-require('dotenv').config();
 
 
 app.use(express.json());

@@ -13,6 +13,7 @@ const s3 = new AWS.S3({
     region: 'eu-north-1' // Example: 'us-east-1'
 });
 
+require('dotenv').config();
 
 app.use(express.json());
 app.use(cors());

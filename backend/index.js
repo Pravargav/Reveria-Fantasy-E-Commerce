@@ -19,9 +19,12 @@ app.use(express.json());
 app.use(cors());
 
 // Database Connection With MongoDB
-mongoose.connect(process.env.MONGO_URI)
+const mongoURI = 'mongodb+srv://SambavJetty:8331819428@cluster0.jap1hzc.mongodb.net/e-commerce';
+
+mongoose.connect(mongoURI)
     .then(() => console.log('MongoDB connected successfully'))
     .catch(err => console.error('Error connecting to MongoDB:', err));
+    
     
 // API Creation
 app.get("/", (req, res) => {

@@ -41,7 +41,7 @@ const AddProduct = () => {
 
       if (responseData.success) {
         // Update the product details with the uploaded image URL
-        product.image = responseData.image_url;
+        product.image = responseData.imageUrl;
 
         // Add the product details to the database
         const addProductResponse = await fetch('http://localhost:4000/addproduct', { 

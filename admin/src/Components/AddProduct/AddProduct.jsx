@@ -30,7 +30,7 @@ const AddProduct = () => {
       formData.append('product', image);
 
       // Upload the image first
-      const uploadResponse = await fetch('http://localhost:4000/upload', { 
+      const uploadResponse = await fetch('https://reveria-backend.vercel.app/upload', { 
         method: 'POST',
         headers: {
           Accept: 'application/json',
@@ -44,7 +44,7 @@ const AddProduct = () => {
         product.image = responseData.imageUrl;
 
         // Add the product details to the database
-        const addProductResponse = await fetch('http://localhost:4000/addproduct', { 
+        const addProductResponse = await fetch('https://reveria-backend.vercel.app//addproduct', { 
           method: 'POST',
           headers: {
             Accept: 'application/json',

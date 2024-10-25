@@ -5,7 +5,6 @@ const path = require("path");
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3'); // Import S3 client and command from v3
 const multer = require('multer');
 const cors = require("cors");
-const fs = require("fs"); // To read files for upload to S3
 require('dotenv').config();
 
 app.use(express.json());
@@ -26,12 +25,12 @@ mongoose.connect(mongoURI)
     .then(() => console.log('MongoDB connected successfully'))
     .catch(err => console.error('Error connecting to MongoDB:', err));
 
-// Multer setup for handling file uploads locally before uploading to S3
-const upload = multer({ dest: 'uploads/' }); // Temporary storage for uploaded files
+// Multer setup for handling file uploads in memory
+const storage = multer.memoryStorage(); // Stores files in memory
+const upload = multer({ storage }); // No local storage required
 
 // Helper function to upload a file to S3
 const uploadFileToS3 = async (file) => {
-    const fileContent = fs.readFileSync(file.path); // Read the file from the local storage
     // Determine the content type based on the file extension
     const contentType = `image/${path.extname(file.originalname).slice(1)}`; // Get the file extension and set content type
 
@@ -39,7 +38,7 @@ const uploadFileToS3 = async (file) => {
     const params = {
         Bucket: process.env.REVERIA_BUCKET,  // S3 bucket name
         Key: `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`,  // Unique file name
-        Body: fileContent,
+        Body: file.buffer, // Use buffer since file is in memory
         ContentType: contentType, // Set the content type
     };
 
@@ -51,11 +50,6 @@ const uploadFileToS3 = async (file) => {
     } catch (error) {
         console.error('Error uploading file to S3:', error);
         throw new Error('Failed to upload file to S3');
-    } finally {
-        // Remove the file from local storage after uploading
-        if (fs.existsSync(file.path)) {
-            fs.unlinkSync(file.path);
-        }
     }
 };
 
@@ -78,6 +72,7 @@ app.post('/upload', upload.single('product'), async (req, res) => {
         res.status(500).json({ success: 0, message: 'Failed to upload image' });
     }
 });
+
 // Database schema for creating products
 const Product = mongoose.model("Product", {
     id: { type: Number, required: true },

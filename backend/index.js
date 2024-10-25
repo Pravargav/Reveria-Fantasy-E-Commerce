@@ -2,10 +2,13 @@ const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
 const path = require("path");
-const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3'); // Import S3 client and command from v3
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3'); 
 const multer = require('multer');
 const cors = require("cors");
+const fs = require("fs"); 
 require('dotenv').config();
+const multerS3 = require("multer-s3");
+
 
 app.use(express.json());
 app.use(cors());
@@ -25,52 +28,27 @@ mongoose.connect(mongoURI)
     .then(() => console.log('MongoDB connected successfully'))
     .catch(err => console.error('Error connecting to MongoDB:', err));
 
-// Multer setup for handling file uploads in memory
-const storage = multer.memoryStorage(); // Stores files in memory
-const upload = multer({ storage }); // No local storage required
-
-// Helper function to upload a file to S3
-const uploadFileToS3 = async (file) => {
-    // Determine the content type based on the file extension
-    const contentType = `image/${path.extname(file.originalname).slice(1)}`; // Get the file extension and set content type
-
-    // Create an S3 PutObjectCommand to upload the file
-    const params = {
-        Bucket: process.env.REVERIA_BUCKET,  // S3 bucket name
-        Key: `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`,  // Unique file name
-        Body: file.buffer, // Use buffer since file is in memory
-        ContentType: contentType, // Set the content type
-    };
-
-    // Upload the file to S3
-    try {
-        const command = new PutObjectCommand(params);
-        await s3.send(command);
-        return `https://${process.env.REVERIA_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
-    } catch (error) {
-        console.error('Error uploading file to S3:', error);
-        throw new Error('Failed to upload file to S3');
-    }
-};
-
-// Upload endpoint for images
-app.post('/upload', upload.single('product'), async (req, res) => {
-    try {
-        if (req.file) {
-            // Upload the file to S3 and get the file URL
-            const imageUrl = await uploadFileToS3(req.file);
-
-            // Send the S3 file URL in the response
-            res.json({
-                success: 1,
-                image_url: imageUrl,  // S3 file URL
-            });
-        } else {
-            res.status(400).json({ success: 0, message: 'No file uploaded' });
+var upload = multer({
+    storage: multerS3({
+        s3: s3,
+        bucket: process.env.REVERIA_BUCKET,
+        contentType: multerS3.AUTO_CONTENT_TYPE,
+        key: function(req, file, cb) {
+        cb(null, file.originalname);
         }
-    } catch (error) {
-        res.status(500).json({ success: 0, message: 'Failed to upload image' });
-    }
+    })
+});
+    
+app.post("/upload", upload.single("product"), (req, res) => {
+    console.log(req.file);
+        
+    // Construct the S3 URL for the uploaded file
+    const imageUrl = `https://${process.env.REVERIA_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${req.file.originalname}`;
+        
+    // Return the image URL in the response
+    res.json({ 
+               success:1,
+               imageUrl: imageUrl });
 });
 
 // Database schema for creating products

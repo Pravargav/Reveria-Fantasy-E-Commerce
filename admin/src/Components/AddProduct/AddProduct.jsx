@@ -3,7 +3,6 @@ import './AddProduct.css';
 import upload_area from '../../assets/upload_area.svg';
 
 const AddProduct = () => {
-  
   const [image, setImage] = useState(null);
   const [productDetails, setProductDetails] = useState({
     name: "",
@@ -21,6 +20,7 @@ const AddProduct = () => {
     setProductDetails({ ...productDetails, [e.target.name]: e.target.value });
   };
 
+
   const Add_Product = async () => {
     try {
       let responseData;
@@ -30,30 +30,31 @@ const AddProduct = () => {
       formData.append('product', image);
 
       // Upload the image first
-      await fetch('https://reveria-backend.vercel.app/upload', {
+      const uploadResponse = await fetch('http://localhost:4000/upload', { 
         method: 'POST',
-        headers:{
-          Accept:'application/json',
+        headers: {
+          Accept: 'application/json',
         },
         body: formData,
-      }).then((resp)=>resp.json()).then((data)=>{responseData=data})
+      });
+      responseData = await uploadResponse.json();
 
       if (responseData.success) {
         // Update the product details with the uploaded image URL
         product.image = responseData.image_url;
 
         // Add the product details to the database
-        await fetch('https://reveria-backend.vercel.app/addproduct', {
+        const addProductResponse = await fetch('http://localhost:4000/addproduct', { 
           method: 'POST',
           headers: {
             Accept: 'application/json',
             'Content-Type': 'application/json'
           },
           body: JSON.stringify(product),
-        }).then((resp)=>resp.json()).then((data)=>{
-          data.success?alert("Product Added"):alert("Failed")
-        })
+        });
+        const addProductData = await addProductResponse.json();
 
+        addProductData.success ? alert("Product Added") : alert("Failed");
       } else {
         alert("Failed to upload image");
       }

@@ -1,59 +1,83 @@
 const express = require("express");
 const app = express();
 const mongoose = require("mongoose");
-const AWS = require('aws-sdk');
-const multer = require('multer');
-const multerS3 = require('multer-s3');
 const path = require("path");
+const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3'); // Import S3 client and command from v3
+const multer = require('multer');
 const cors = require("cors");
-const jwt = require("jsonwebtoken");
-const s3 = new AWS.S3({
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-    region: 'eu-north-1' // Example: 'us-east-1'
-});
-
+const fs = require("fs"); // To read files for upload to S3
 require('dotenv').config();
 
 app.use(express.json());
 app.use(cors());
 
-// Database Connection With MongoDB
-const mongoURI = 'mongodb+srv://SambavJetty:8331819428@cluster0.jap1hzc.mongodb.net/e-commerce';
+// Initialize the S3 client using AWS SDK v3
+const s3 = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+    },
+});
 
+// Database Connection With MongoDB
+const mongoURI = 'mongodb+srv://SambavJetty:plusinfinity@cluster0.jap1hzc.mongodb.net/e-commerce';
 mongoose.connect(mongoURI)
     .then(() => console.log('MongoDB connected successfully'))
     .catch(err => console.error('Error connecting to MongoDB:', err));
-    
-    
-// API Creation
-app.get("/", (req, res) => {
-    res.send("Express App is Running");
-});
 
-// Configure Multer to use S3 for storage
-const upload = multer({
-    storage: multerS3({
-        s3: s3,
-        bucket: 'reveria-bucket',  // Replace with your S3 bucket name
-        acl: 'public-read',  // Optional, to make the file public
-        metadata: (req, file, cb) => {
-            cb(null, { fieldName: file.fieldname });
-        },
-        key: (req, file, cb) => {
-            cb(null, `${Date.now().toString()}_${file.originalname}`);  // File name in S3
+// Multer setup for handling file uploads locally before uploading to S3
+const upload = multer({ dest: 'uploads/' }); // Temporary storage for uploaded files
+
+// Helper function to upload a file to S3
+const uploadFileToS3 = async (file) => {
+    const fileContent = fs.readFileSync(file.path); // Read the file from the local storage
+    // Determine the content type based on the file extension
+    const contentType = `image/${path.extname(file.originalname).slice(1)}`; // Get the file extension and set content type
+
+    // Create an S3 PutObjectCommand to upload the file
+    const params = {
+        Bucket: process.env.REVERIA_BUCKET,  // S3 bucket name
+        Key: `${file.fieldname}_${Date.now()}${path.extname(file.originalname)}`,  // Unique file name
+        Body: fileContent,
+        ContentType: contentType, // Set the content type
+    };
+
+    // Upload the file to S3
+    try {
+        const command = new PutObjectCommand(params);
+        await s3.send(command);
+        return `https://${process.env.REVERIA_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${params.Key}`;
+    } catch (error) {
+        console.error('Error uploading file to S3:', error);
+        throw new Error('Failed to upload file to S3');
+    } finally {
+        // Remove the file from local storage after uploading
+        if (fs.existsSync(file.path)) {
+            fs.unlinkSync(file.path);
         }
-    })
-});
+    }
+};
 
 // Upload endpoint for images
-app.post("/upload", upload.single('product'), (req, res) => {
-    res.json({
-        success: 1,
-        image_url: req.file.location // S3 URL of the uploaded file
-    });
-});
+app.post('/upload', upload.single('product'), async (req, res) => {
+    try {
+        if (req.file) {
+            // Upload the file to S3 and get the file URL
+            const imageUrl = await uploadFileToS3(req.file);
 
+            // Send the S3 file URL in the response
+            res.json({
+                success: 1,
+                image_url: imageUrl,  // S3 file URL
+            });
+        } else {
+            res.status(400).json({ success: 0, message: 'No file uploaded' });
+        }
+    } catch (error) {
+        res.status(500).json({ success: 0, message: 'Failed to upload image' });
+    }
+});
 // Database schema for creating products
 const Product = mongoose.model("Product", {
     id: { type: Number, required: true },

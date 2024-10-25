@@ -6,7 +6,7 @@ const NewCollections = () => {
     const[new_collection,setNew_collection]=useState([]);
 
     useEffect(()=>{
-      fetch('https://reveria-backend.vercel.app/newcollections')
+      fetch('http://localhost:4000/newcollections')
       .then((response)=>response.json())
       .then((data)=>setNew_collection(data));
     },[])

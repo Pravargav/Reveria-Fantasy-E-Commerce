@@ -8,13 +8,13 @@ const ShopContextProvider = (props) => {
   const [cartItems, setCartItems] = useState({});
 
   useEffect(() => {
-    fetch('https://reveria-backend.vercel.app/allproducts')
+    fetch('http://localhost:4000/allproducts')
       .then((response) => response.json())
       .then((data) => setAll_Product(data))
  
 
     if (localStorage.getItem('auth-token')) {
-      fetch('https://reveria-backend.vercel.app/getcart', {
+      fetch('http://localhost:4000/getcart', {
         method: 'POST',
         headers: {
           Accept: 'application/form-data',
@@ -34,7 +34,7 @@ const ShopContextProvider = (props) => {
     }));
   
     if (localStorage.getItem('auth-token')) {
-      fetch('https://reveria-backend.vercel.app/addtocart', {
+      fetch('http://localhost:4000/addtocart', {
         method: 'POST',
         headers: {
           Accept: 'application/json',  // Accept JSON, as you're expecting JSON responses
@@ -65,7 +65,7 @@ const ShopContextProvider = (props) => {
     });
   
     if (localStorage.getItem('auth-token')) {
-      fetch('https://reveria-backend.vercel.app/removefromcart', {
+      fetch('http://localhost:4000/removefromcart', {
         method: 'POST',
         headers: {
           Accept: 'application/json',  // Changed to JSON

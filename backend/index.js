@@ -4,6 +4,7 @@ const mongoose = require("mongoose");
 const path = require("path");
 const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3'); 
 const multer = require('multer');
+const jwt = require('jsonwebtoken');
 const cors = require("cors");
 const fs = require("fs"); 
 require('dotenv').config();

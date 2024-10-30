@@ -20,7 +20,7 @@ const LoginSignup = () => {
     await fetch('https://reveria-backend.vercel.app/login',{
       method:'POST',
       headers:{
-        Accept:'application/form-data',
+        Accept:'application/json',
         'Content-Type' : 'application/json',
       },
       body: JSON.stringify(formData)
@@ -41,7 +41,7 @@ const LoginSignup = () => {
     await fetch('https://reveria-backend.vercel.app/signup',{
       method:'POST',
       headers:{
-        Accept:'application/form-data',
+        Accept:'application/json',
         'Content-Type' : 'application/json',
       },
       body: JSON.stringify(formData),

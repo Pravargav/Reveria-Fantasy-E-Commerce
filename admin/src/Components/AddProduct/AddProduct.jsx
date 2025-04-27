@@ -44,7 +44,7 @@ const AddProduct = () => {
         product.image = responseData.imageUrl;
 
         // Add the product details to the database
-        const addProductResponse = await fetch('https://reveria-backend.vercel.app//addproduct', { 
+        const addProductResponse = await fetch('https://reveria-backend.vercel.app/addproduct', { 
           method: 'POST',
           headers: {
             Accept: 'application/json',

@@ -1,0 +1,58 @@
+version: '3.8'
+
+networks:
+  app-network:
+    driver: bridge
+
+services:
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "4000:4000"
+    networks:
+      - app-network
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/mydatabase
+      - AWS_ACCESS_KEY_ID=your_aws_access_key_id
+      - AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+      - REVERIA_BUCKET=your_s3_bucket
+      - AWS_REGION=your_s3_region
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    ports:
+      - "5173:5173"
+    networks:
+      - app-network
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
